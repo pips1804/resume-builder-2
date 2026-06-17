@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  FileText, Download, Save, RotateCcw,
+  BriefcaseBusiness, Download, Save, RotateCcw,
   Upload, MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -86,7 +86,7 @@ export function Navbar({ theme, onToggleTheme }) {
         <div className="flex h-14 items-center justify-between px-3 sm:px-4 gap-2">
           {/* Logo */}
           <div className="flex items-center gap-2 min-w-0">
-            <FileText className="h-5 w-5 text-primary shrink-0" />
+            <BriefcaseBusiness className="h-5 w-5 text-primary shrink-0" />
             <span className="font-semibold text-sm truncate hidden xs:block sm:block">
               HireMePo 2.0
             </span>

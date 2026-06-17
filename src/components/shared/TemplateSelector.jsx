@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, ArrowRight, CheckCircle2 } from "lucide-react";
+import { BriefcaseBusiness, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useResumeStore } from "@/store/resumeStore";
 import { cn } from "@/lib/utils";
@@ -155,7 +155,7 @@ export function TemplateSelector() {
     <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-y-auto">
       {/* Header */}
       <div className="flex items-center gap-2 px-6 py-4 border-b shrink-0">
-        <FileText className="h-5 w-5 text-primary" />
+        <BriefcaseBusiness className="h-5 w-5 text-primary" />
         <span className="font-semibold text-sm">HireMePo 2.0</span>
       </div>
 
