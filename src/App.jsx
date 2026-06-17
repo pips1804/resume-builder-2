@@ -39,9 +39,10 @@ export default function App() {
             resume.personal.fullName || "My",
             resume.meta.paperSize || "a4"
           );
-          toast.success("Resume downloaded!");
-        } catch {
-          toast.error("Export failed.");
+          toast.info("Choose \"Save as PDF\" in the print dialog.");
+        } catch (err) {
+          console.error("PDF export failed:", err);
+          toast.error(`Export failed: ${err?.message || "unknown error"}`);
         }
       }
     }

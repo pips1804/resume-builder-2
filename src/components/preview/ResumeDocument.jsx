@@ -30,24 +30,24 @@ function getTheme(template, accent) {
         lineHeight: 1.6, margin: 0,
       },
       contactSep: " | ",
-      headerMarginBottom: "18px",
-      sectionGap: "14px",
+      headerMarginBottom: "14px",
+      sectionGap: "12px",
       sectionHeading: (title) => ({
-        wrapper: { marginBottom: "6px" },
+        wrapper: { marginBottom: "5px" },
         text: {
           fontSize: "13px", fontWeight: "700",
           textTransform: "uppercase", letterSpacing: "0.08em",
-          color: ac, margin: "0 0 3px 0",
+          color: ac, margin: "0 0 5px 0",
         },
         rule: { height: "1px", backgroundColor: ac, opacity: 0.8 },
       }),
-      entryTop: { marginTop: "8px" },
+      entryTop: { marginTop: "6px" },
       entryTitleStyle: { fontSize: "12px", fontWeight: "700", color: "#111" },
-      subtitleStyle: { fontSize: "11px", color: "#444", fontStyle: "italic", margin: "1px 0 3px 0" },
+      subtitleStyle: { fontSize: "11px", color: "#444", fontStyle: "italic", margin: "1px 0 2px 0" },
       dateStyle: { fontSize: "11px", color: "#444", whiteSpace: "nowrap", marginLeft: "8px", textAlign: "right" },
-      bulletStyle: { margin: "4px 0 0 0", paddingLeft: "16px", listStyleType: "disc" },
+      bulletStyle: { margin: "3px 0 0 0", paddingLeft: "16px", listStyleType: "disc" },
       bulletItemStyle: { fontSize: "inherit", color: "#222", lineHeight: 1.5, marginBottom: "2px" },
-      bodyText: { fontSize: "inherit", color: "#222", lineHeight: 1.55, margin: "6px 0 0 0", textAlign: "justify" },
+      bodyText: { fontSize: "inherit", color: "#222", lineHeight: 1.55, margin: "4px 0 0 0", textAlign: "justify" },
     },
 
     // ── Modern ───────────────────────────────────────────────────
@@ -75,7 +75,7 @@ function getTheme(template, accent) {
         text: {
           fontSize: "12px", fontWeight: "700",
           textTransform: "uppercase", letterSpacing: "0.1em",
-          color: ac, margin: 0, flexShrink: 0,
+          color: ac, margin: "0 0 0 0", flexShrink: 0,
         },
         rule: { flex: 1, height: "1px", backgroundColor: ac, opacity: 0.3 },
       }),
@@ -113,7 +113,7 @@ function getTheme(template, accent) {
         text: {
           fontSize: "10px", fontWeight: "600",
           textTransform: "uppercase", letterSpacing: "0.18em",
-          color: "#999", margin: "0 0 4px 0",
+          color: "#999", margin: "0 0 5px 0",
         },
         rule: { height: "0.5px", backgroundColor: "#ddd", opacity: 1 },
       }),
@@ -137,7 +137,12 @@ function SectionHeading({ title, theme }) {
   const s = theme.sectionHeading(title);
   return (
     <div style={s.wrapper}>
-      <h2 style={s.text}>{title}</h2>
+      {/*
+        Use <div> instead of <h2> to avoid UA-stylesheet margins (margin-block-end: 0.83em)
+        that inflate the gap in the PDF.  Pin lineHeight: 1 to eliminate half-leading so the
+        rule sits exactly `margin-bottom` pixels below the text in both preview and PDF.
+      */}
+      <div style={{ ...s.text, lineHeight: 1, display: "block" }}>{title}</div>
       <div style={s.rule} />
     </div>
   );
