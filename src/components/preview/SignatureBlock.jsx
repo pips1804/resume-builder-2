@@ -31,12 +31,14 @@ export function SignatureBlock({
   offsetY = 0,
   resizable = false,
   movable = false,
+  highlightOnly = false,
   documentScale = 1,
   onResize,
   onMove,
 }) {
   const hasSig = Boolean(signature);
   const interactive = Boolean(resizable || movable);
+  const showHighlight = Boolean(highlightOnly && hasSig);
   const overlap = hasSig
     ? Math.round(SIGNATURE_NAME_OVERLAP * (height / SIGNATURE_HEIGHT))
     : 0;
@@ -192,6 +194,7 @@ export function SignatureBlock({
                   border: "none",
                   padding: 0,
                   cursor: "move",
+                  touchAction: "none",
                 }}
               />
             )}
@@ -226,9 +229,23 @@ export function SignatureBlock({
                     cursor: "nwse-resize",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
                     zIndex: 3,
+                    touchAction: "none",
                   }}
                 />
               </>
+            )}
+            {showHighlight && (
+              <div
+                className="signature-highlight-ui"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  border: "1px dashed rgba(59, 130, 246, 0.65)",
+                  borderRadius: "2px",
+                  pointerEvents: "none",
+                }}
+                aria-hidden
+              />
             )}
           </div>
         )}

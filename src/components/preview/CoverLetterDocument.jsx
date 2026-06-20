@@ -1,4 +1,5 @@
 import { useResumeStore } from "@/store/resumeStore";
+import { useTouchSignatureControls } from "@/hooks/useTouchSignatureControls";
 import { formatLetterDate } from "@/lib/utils";
 import { getPaperSize } from "@/lib/paperSizes";
 import { SignatureBlock } from "./SignatureBlock";
@@ -156,9 +157,13 @@ function LetterHeader({ sender, letter, theme, accent, variant }) {
 export function CoverLetterDocument({
   interactiveSignature = false,
   documentScale = 1,
+  rootId,
 }) {
   const { coverLetter, updateCoverLetterLetter } = useResumeStore();
+  const touchPlacement = useTouchSignatureControls();
   const { meta, sender, letter } = coverLetter;
+  const hasSignature = Boolean(letter.signature);
+  const useDragHandles = interactiveSignature && hasSignature && !touchPlacement;
 
   const paper = getPaperSize(meta.paperSize || "letter");
   const padding = marginMap[meta.pageMargin] || 48;
@@ -180,7 +185,7 @@ export function CoverLetterDocument({
 
   return (
     <div
-      id="document-root"
+      id={rootId}
       style={{
         width: `${paper.widthPx}px`,
         minHeight: `${paper.heightPx}px`,
@@ -203,6 +208,7 @@ export function CoverLetterDocument({
 
       {recipientLine && (
         <div
+          className="cover-letter-recipient-row"
           style={{
             display: "flex",
             alignItems: "center",
@@ -211,7 +217,7 @@ export function CoverLetterDocument({
           }}
         >
           <span style={theme.recipientStyle}>To {recipientLine}</span>
-          <div style={theme.recipientRule} />
+          <div className="cover-letter-recipient-rule" style={theme.recipientRule} />
         </div>
       )}
 
@@ -243,19 +249,20 @@ export function CoverLetterDocument({
         signedNameStyle={theme.signedNameStyle}
         width={letter.signatureWidth ?? SIGNATURE_WIDTH}
         height={letter.signatureHeight ?? SIGNATURE_HEIGHT}
-        resizable={interactiveSignature && Boolean(letter.signature)}
+        resizable={useDragHandles}
         documentScale={documentScale}
         offsetX={letter.signatureOffsetX ?? 0}
         offsetY={letter.signatureOffsetY ?? 0}
-        movable={interactiveSignature && Boolean(letter.signature)}
+        movable={useDragHandles}
+        highlightOnly={interactiveSignature && hasSignature && touchPlacement}
         onResize={
-          interactiveSignature
+          useDragHandles
             ? (signatureWidth, signatureHeight) =>
                 updateCoverLetterLetter({ signatureWidth, signatureHeight })
             : undefined
         }
         onMove={
-          interactiveSignature
+          useDragHandles
             ? (signatureOffsetX, signatureOffsetY) =>
                 updateCoverLetterLetter({ signatureOffsetX, signatureOffsetY })
             : undefined

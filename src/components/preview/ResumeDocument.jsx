@@ -179,20 +179,55 @@ function getTheme(template, accent) {
   return themes[template] || themes.classic;
 }
 
+const SECTION_HEADING_RULE_GAP = "8px";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared section heading renderer (template-aware)
 // ─────────────────────────────────────────────────────────────────────────────
 function SectionHeading({ title, theme }) {
   const s = theme.sectionHeading(title);
+  const isInlineRule = s.wrapper?.display === "flex";
+
+  if (isInlineRule) {
+    return (
+      <div className="resume-section-heading resume-section-heading--inline" style={s.wrapper}>
+        <div
+          className="resume-section-heading-text"
+          style={{ ...s.text, lineHeight: 1, margin: 0, flexShrink: 0 }}
+        >
+          {title}
+        </div>
+        <div className="resume-section-heading-rule" style={{ ...s.rule, alignSelf: "center" }} />
+      </div>
+    );
+  }
+
   return (
-    <div style={s.wrapper}>
-      {/*
-        Use <div> instead of <h2> to avoid UA-stylesheet margins (margin-block-end: 0.83em)
-        that inflate the gap in the PDF.  Pin lineHeight: 1 to eliminate half-leading so the
-        rule sits exactly `margin-bottom` pixels below the text in both preview and PDF.
-      */}
-      <div style={{ ...s.text, lineHeight: 1, display: "block" }}>{title}</div>
-      <div style={s.rule} />
+    <div className="resume-section-heading" style={s.wrapper}>
+      <div
+        className="resume-section-heading-text"
+        style={{
+          ...s.text,
+          lineHeight: 1.2,
+          display: "block",
+          margin: 0,
+          padding: 0,
+        }}
+      >
+        {title}
+      </div>
+      {/* Fixed-height spacer — html2canvas ignores margins/padding between blocks */}
+      <div
+        className="resume-section-heading-gap"
+        aria-hidden="true"
+        style={{
+          display: "block",
+          height: SECTION_HEADING_RULE_GAP,
+          minHeight: SECTION_HEADING_RULE_GAP,
+          width: "100%",
+        }}
+      />
+      <div className="resume-section-heading-rule" style={{ ...s.rule, display: "block" }} />
     </div>
   );
 }
@@ -570,7 +605,7 @@ const SECTION_COMPONENTS = {
 // ─────────────────────────────────────────────────────────────────────────────
 // Main exported component
 // ─────────────────────────────────────────────────────────────────────────────
-export function ResumeDocument() {
+export function ResumeDocument({ rootId }) {
   const { resume } = useResumeStore();
   const { meta, personal } = resume;
 
@@ -585,7 +620,7 @@ export function ResumeDocument() {
 
   return (
     <div
-      id="document-root"
+      id={rootId}
       style={{
         width:           `${paper.widthPx}px`,
         minHeight:       `${paper.heightPx}px`,

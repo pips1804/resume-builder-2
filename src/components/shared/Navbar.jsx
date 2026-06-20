@@ -142,11 +142,15 @@ export function Navbar({ theme, onToggleTheme, onShowTutorial }) {
       const paperSize = isCoverLetter
         ? coverLetter.meta.paperSize
         : resume.meta.paperSize;
-      await exportDocumentToPdf({
+      const result = await exportDocumentToPdf({
         filename: `${name.replace(/\s+/g, "-")}-${suffix}`,
         paperSizeId: paperSize || "letter",
       });
-      toast.info("Choose \"Save as PDF\" in the print dialog.");
+      if (result?.method === "download") {
+        toast.success("PDF downloaded to your device.");
+      } else {
+        toast.info('Choose "Save as PDF" in the print dialog.', { duration: 5000 });
+      }
     } catch (err) {
       console.error("PDF export failed:", err);
       toast.error(`Export failed: ${err?.message || "unknown error"}`);

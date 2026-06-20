@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { SignaturePadModal } from "./SignaturePadModal";
+import { SignaturePlacementControls } from "./SignaturePlacementControls";
 import { SignatureBlock } from "@/components/preview/SignatureBlock";
 import { AnimatedSection } from "@/components/shared/motion";
+import { useTouchSignatureControls } from "@/hooks/useTouchSignatureControls";
 import { toast } from "sonner";
 import {
   SIGNATURE_WIDTH,
@@ -43,6 +45,7 @@ export function CoverLetterFormPanel() {
   } = useResumeStore();
 
   const { sender, letter } = coverLetter;
+  const touchPlacement = useTouchSignatureControls();
 
   function applySignature(dataUrl) {
     updateCoverLetterLetter({
@@ -288,8 +291,10 @@ export function CoverLetterFormPanel() {
                   </label>
                   <p className="text-xs text-muted-foreground">
                     PNG with a transparent background works best — your signature will
-                    overlap your printed name. Resize it on the document preview by
-                    dragging the blue corner, and move it by dragging the signature.
+                    overlap your printed name.
+                    {touchPlacement
+                      ? " Adjust position and size with the sliders below, or on the Preview tab."
+                      : " Resize on the document preview by dragging the blue corner, and move it by dragging the signature."}
                   </p>
                 </div>
               )}
@@ -306,9 +311,9 @@ export function CoverLetterFormPanel() {
                     {letter.signature ? "Edit signature" : "Open drawing pad"}
                   </Button>
                   <p className="text-xs text-muted-foreground">
-                    Opens a large drawing pad. After saving, resize on the document
-                    preview by dragging the blue corner handle, and move it by dragging
-                    the signature.
+                    Opens a large drawing pad. After saving, use the sliders below
+                    {touchPlacement ? " or on the Preview tab" : ""} to position your
+                    signature.
                   </p>
                   <SignaturePadModal
                     open={drawModalOpen}
@@ -317,6 +322,10 @@ export function CoverLetterFormPanel() {
                     onSave={applySignature}
                   />
                 </div>
+              )}
+
+              {letter.signature && touchPlacement && (
+                <SignaturePlacementControls className="lg:hidden" />
               )}
 
               {letter.signature && (

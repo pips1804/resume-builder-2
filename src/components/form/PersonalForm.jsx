@@ -37,7 +37,7 @@ export function PersonalForm() {
         <Field
           label="Full Name *"
           id="fullName"
-          placeholder="Jhon Paul G. Manlapaz"
+          placeholder="John Doe"
           value={p.fullName}
           onChange={onChange("fullName")}
         />
@@ -62,7 +62,7 @@ export function PersonalForm() {
         <Field
           label="Phone"
           id="phone"
-          placeholder="09936840763"
+          placeholder="09123456789"
           value={p.phone}
           onChange={onChange("phone")}
         />
@@ -79,7 +79,7 @@ export function PersonalForm() {
         <Field
           label="Website"
           id="website"
-          placeholder="jhonpaulgm.vercel.app"
+          placeholder="sample.com"
           value={p.website}
           onChange={onChange("website")}
         />

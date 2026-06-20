@@ -1,7 +1,9 @@
 import { useRef, useEffect, useState } from "react";
 import { ResumeDocument } from "./ResumeDocument";
 import { CoverLetterDocument } from "./CoverLetterDocument";
+import { SignaturePlacementControls } from "@/components/form/SignaturePlacementControls";
 import { useResumeStore } from "@/store/resumeStore";
+import { useTouchSignatureControls } from "@/hooks/useTouchSignatureControls";
 import { getPaperSize } from "@/lib/paperSizes";
 import { FileText, Mail } from "lucide-react";
 
@@ -33,11 +35,14 @@ export function PreviewPanel() {
   const docLabel = isCoverLetter ? "Cover Letter" : "Resume";
   const hasResizableSignature =
     isCoverLetter && Boolean(coverLetter.letter.signature);
+  const touchPlacement = useTouchSignatureControls();
+  const showSignatureControls = hasResizableSignature && touchPlacement;
 
   return (
+    <div className="h-full flex flex-col overflow-hidden">
     <div
       ref={containerRef}
-      className="h-full overflow-y-auto bg-muted/40 flex flex-col items-center py-4 px-4"
+      className="flex-1 overflow-y-auto bg-muted/40 flex flex-col items-center py-4 px-4 min-h-0"
     >
       <div className="flex flex-col items-center gap-1 mb-3">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -47,8 +52,10 @@ export function PreviewPanel() {
           </span>
         </div>
         {hasResizableSignature && (
-          <p className="text-xs text-primary/80">
-            Drag your signature to move it · drag the blue corner to resize
+          <p className="text-xs text-primary/80 text-center px-2">
+            {touchPlacement
+              ? "Use the controls below to move and resize your signature"
+              : "Drag your signature to move it · drag the blue corner to resize"}
           </p>
         )}
       </div>
@@ -85,6 +92,13 @@ export function PreviewPanel() {
       </div>
 
       <div style={{ height: "24px", flexShrink: 0 }} />
+    </div>
+
+    {showSignatureControls && (
+      <div className="shrink-0 border-t bg-background p-3 lg:hidden">
+        <SignaturePlacementControls compact />
+      </div>
+    )}
     </div>
   );
 }

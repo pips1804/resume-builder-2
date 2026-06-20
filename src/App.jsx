@@ -4,6 +4,7 @@ import { Navbar } from "@/components/shared/Navbar";
 import { FormPanel } from "@/components/form/FormPanel";
 import { CoverLetterFormPanel } from "@/components/form/CoverLetterFormPanel";
 import { PreviewPanel } from "@/components/preview/PreviewPanel";
+import { PrintDocumentSource } from "@/components/preview/PrintDocumentSource";
 import { DocumentTypeSelector } from "@/components/shared/DocumentTypeSelector";
 import { TemplateSelector } from "@/components/shared/TemplateSelector";
 import { OnboardingWalkthrough } from "@/components/shared/OnboardingWalkthrough";
@@ -68,11 +69,15 @@ export default function App() {
           const paperSize = isCoverLetter
             ? coverLetter.meta.paperSize
             : resume.meta.paperSize;
-          await exportDocumentToPdf({
+          const result = await exportDocumentToPdf({
             filename: `${name.replace(/\s+/g, "-")}-${suffix}`,
             paperSizeId: paperSize || "letter",
           });
-          toast.info("Choose \"Save as PDF\" in the print dialog.");
+          if (result?.method === "download") {
+            toast.success("PDF downloaded to your device.");
+          } else {
+            toast.info('Choose "Save as PDF" in the print dialog.', { duration: 5000 });
+          }
         } catch (err) {
           console.error("PDF export failed:", err);
           toast.error(`Export failed: ${err?.message || "unknown error"}`);
@@ -146,6 +151,8 @@ export default function App() {
           </Tabs>
         </div>
       </div>
+
+      <PrintDocumentSource />
 
       <Toaster richColors position="bottom-right" />
 
