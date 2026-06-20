@@ -12,6 +12,7 @@ import { LanguagesForm } from "./LanguagesForm";
 import { AwardsForm } from "./AwardsForm";
 import { ReferencesForm } from "./ReferencesForm";
 import { AtsPanel } from "@/components/shared/AtsPanel";
+import { AnimatedSection } from "@/components/shared/motion";
 import {
   Select,
   SelectContent,
@@ -80,6 +81,7 @@ export function FormPanel() {
 
         {/* Scrollable form content */}
         <div ref={sectionRef} className="flex-1 overflow-y-auto">
+          <AnimatedSection sectionKey={activeSection}>
           <div className="p-4 space-y-5">
             {/* Section heading */}
             <div>
@@ -94,6 +96,7 @@ export function FormPanel() {
               <AtsPanel />
             </div>
           </div>
+          </AnimatedSection>
         </div>
       </div>
     </div>

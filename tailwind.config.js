@@ -53,43 +53,42 @@ export default {
   		},
   		keyframes: {
   			'accordion-down': {
-  				from: {
-  					height: '0'
-  				},
-  				to: {
-  					height: 'var(--radix-accordion-content-height)'
-  				}
+  				from: { height: '0' },
+  				to: { height: 'var(--radix-accordion-content-height)' }
   			},
   			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
-  				},
-  				to: {
-  					height: '0'
-  				}
+  				from: { height: 'var(--radix-accordion-content-height)' },
+  				to: { height: '0' }
   			},
-  			'accordion-down': {
-  				from: {
-  					height: '0'
-  				},
-  				to: {
-  					height: 'var(--radix-accordion-content-height)'
-  				}
+  			'page-enter': {
+  				from: { opacity: '0', transform: 'translateY(12px)' },
+  				to: { opacity: '1', transform: 'translateY(0)' }
   			},
-  			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
-  				},
-  				to: {
-  					height: '0'
-  				}
+  			'content-in': {
+  				from: { opacity: '0', transform: 'translateX(8px)' },
+  				to: { opacity: '1', transform: 'translateX(0)' }
+  			},
+  			'stagger-in': {
+  				from: { opacity: '0', transform: 'translateY(16px)' },
+  				to: { opacity: '1', transform: 'translateY(0)' }
+  			},
+  			'step-in': {
+  				from: { opacity: '0', transform: 'translateY(6px)' },
+  				to: { opacity: '1', transform: 'translateY(0)' }
+  			},
+  			'tab-in': {
+  				from: { opacity: '0', transform: 'translateY(4px)' },
+  				to: { opacity: '1', transform: 'translateY(0)' }
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-  			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'page-enter': 'page-enter 0.4s ease-out both',
+  			'content-in': 'content-in 0.28s ease-out both',
+  			'stagger-in': 'stagger-in 0.45s ease-out both',
+  			'step-in': 'step-in 0.22s ease-out both',
+  			'tab-in': 'tab-in 0.2s ease-out both'
   		}
   	}
   },

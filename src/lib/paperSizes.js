@@ -56,5 +56,5 @@ export const PAPER_SIZES = {
 export const PAPER_SIZE_LIST = Object.values(PAPER_SIZES);
 
 export function getPaperSize(id) {
-  return PAPER_SIZES[id] ?? PAPER_SIZES.a4;
+  return PAPER_SIZES[id] ?? PAPER_SIZES.letter;
 }

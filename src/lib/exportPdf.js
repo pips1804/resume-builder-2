@@ -1,25 +1,18 @@
 import { getPaperSize } from "./paperSizes";
 
 /*
- * Export strategy: NATIVE BROWSER PRINT.
- *
- * Rasterizing the preview with html2canvas never matched the live preview
- * (blurry text, layout drift, blank pages). Instead we let the browser's own
- * print engine render the resume — it uses the exact same CSS, real fonts and
- * vector text, so the PDF is pixel-faithful to what the user sees.
- *
- * We clone #resume-root into a dedicated #print-root attached to <body>. The
- * clone is free of the preview's `transform: scale()` wrapper, so it renders
- * at its true paper size. During print we hide the app (#root) and show only
- * #print-root, with an @page rule matching the selected paper size.
+ * Native browser print — clones #document-root at true paper size.
  */
-export async function exportResumeToPdf(fullName = "resume", paperSizeId = "a4") {
-  const element = document.getElementById("resume-root");
-  if (!element) throw new Error("Resume element not found");
+export async function exportDocumentToPdf({
+  elementId = "document-root",
+  filename = "Document",
+  paperSizeId = "letter",
+} = {}) {
+  const element = document.getElementById(elementId);
+  if (!element) throw new Error("Document element not found");
 
   const paper = getPaperSize(paperSizeId);
 
-  // Clone the resume at natural size, stripped of preview-only styling.
   const clone = element.cloneNode(true);
   clone.removeAttribute("id");
   Object.assign(clone.style, {
@@ -34,11 +27,8 @@ export async function exportResumeToPdf(fullName = "resume", paperSizeId = "a4")
   printRoot.appendChild(clone);
   document.body.appendChild(printRoot);
 
-  // Suggest a sensible filename in the print dialog via the document title.
   const prevTitle = document.title;
-  document.title = fullName
-    ? `${fullName.replace(/\s+/g, "-")}-Resume`
-    : "Resume";
+  document.title = filename.replace(/\s+/g, "-");
 
   const style = document.createElement("style");
   style.id = "print-style";
@@ -60,6 +50,8 @@ export async function exportResumeToPdf(fullName = "resume", paperSizeId = "a4")
         top: 0;
         left: 0;
       }
+      .signature-resize-ui { display: none !important; }
+      .signature-move-ui { display: none !important; }
     }
   `;
   document.head.appendChild(style);
@@ -75,10 +67,15 @@ export async function exportResumeToPdf(fullName = "resume", paperSizeId = "a4")
   };
   window.addEventListener("afterprint", cleanup);
 
-  // Let the browser apply the injected styles before opening the dialog.
   await new Promise((resolve) => setTimeout(resolve, 60));
   window.print();
-
-  // Safety net: some browsers don't fire `afterprint` reliably.
   setTimeout(cleanup, 60000);
+}
+
+/** @deprecated use exportDocumentToPdf */
+export async function exportResumeToPdf(fullName = "resume", paperSizeId = "letter") {
+  const filename = fullName
+    ? `${fullName.replace(/\s+/g, "-")}-Resume`
+    : "Resume";
+  return exportDocumentToPdf({ filename, paperSizeId });
 }

@@ -1,6 +1,8 @@
 import { useResumeStore } from "@/store/resumeStore";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Upload, X } from "lucide-react";
 
 function Field({ label, id, hint, ...props }) {
   return (
@@ -15,8 +17,19 @@ function Field({ label, id, hint, ...props }) {
 export function PersonalForm() {
   const { resume, updatePersonal } = useResumeStore();
   const p = resume.personal;
+  const supportsPhoto = resume.meta.template === "classic-photo";
 
   const onChange = (field) => (e) => updatePersonal({ [field]: e.target.value });
+
+  function handlePhotoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => updatePersonal({ photo: ev.target.result });
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
 
   return (
     <div className="space-y-4">
@@ -88,6 +101,52 @@ export function PersonalForm() {
           onChange={onChange("github")}
         />
       </div>
+
+      {supportsPhoto && (
+        <div className="space-y-2 rounded-lg border p-4 bg-muted/30">
+          <Label>Profile Photo</Label>
+          <p className="text-xs text-muted-foreground">
+            Appears at the top right of your resume header. Recommended: square image, at least 200×200 px.
+          </p>
+          <div className="flex items-center gap-4">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border bg-background flex items-center justify-center">
+              {p.photo ? (
+                <img src={p.photo} alt="Profile preview" className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-[10px] text-muted-foreground text-center px-1">No photo</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="profile-photo">
+                <Button variant="outline" size="sm" asChild>
+                  <span className="cursor-pointer">
+                    <Upload className="h-4 w-4 mr-1.5" />
+                    Upload photo
+                  </span>
+                </Button>
+                <input
+                  id="profile-photo"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoUpload}
+                />
+              </label>
+              {p.photo && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive justify-start px-2"
+                  onClick={() => updatePersonal({ photo: null })}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Remove photo
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

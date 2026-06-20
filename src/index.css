@@ -58,3 +58,29 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+@layer utilities {
+  .motion-page {
+    @apply animate-page-enter;
+  }
+  .motion-section {
+    @apply animate-content-in;
+  }
+  .motion-stagger {
+    @apply animate-stagger-in opacity-0;
+  }
+  .motion-step {
+    @apply animate-step-in;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-page,
+  .motion-section,
+  .motion-stagger,
+  .motion-step {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   BriefcaseBusiness, Download, Save, RotateCcw,
   Upload, MoreHorizontal, HelpCircle, FileJson,
-  FolderOpen, ShieldCheck,
+  FolderOpen, ShieldCheck, Map,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
 import { CustomizeDrawer } from "./CustomizeDrawer";
+import { ImportDraftDialog } from "./ImportDraftDialog";
 import { useResumeStore } from "@/store/resumeStore";
 import { toast } from "sonner";
 import {
@@ -26,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // ── Save / Import help dialog ─────────────────────────────────────────────────
-function DraftHelpDialog({ open, onClose }) {
+function DraftHelpDialog({ open, onClose, onShowTutorial }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -75,9 +76,10 @@ function DraftHelpDialog({ open, onClose }) {
               as you left it, including customization settings.
             </p>
             <p className="text-xs text-muted-foreground bg-muted rounded-md px-3 py-2">
-              💡 <strong>When to use it:</strong> Continuing work on another
-              device, restoring a backup, or loading a different version of
-              your resume.
+              💡 <strong>Classic + Photo tip:</strong> Choose that template first, then
+              import a Classic draft — your content loads and you only need to upload
+              a photo. If you&apos;re already on Classic + Photo, importing a Classic
+              draft keeps that template too.
             </p>
           </div>
 
@@ -92,8 +94,20 @@ function DraftHelpDialog({ open, onClose }) {
           </div>
         </div>
 
-        <DialogFooter>
-          <Button onClick={onClose}>Got it</Button>
+        <DialogFooter className="sm:justify-between gap-2">
+          {onShowTutorial && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                onClose();
+                onShowTutorial();
+              }}
+            >
+              <Map className="h-4 w-4 mr-1.5" />
+              Show app tour
+            </Button>
+          )}
+          <Button onClick={onClose} className="sm:ml-auto">Got it</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -101,20 +115,37 @@ function DraftHelpDialog({ open, onClose }) {
 }
 
 // ── Main Navbar ───────────────────────────────────────────────────────────────
-export function Navbar({ theme, onToggleTheme }) {
-  const { resume, resetResume, loadResume } = useResumeStore();
+export function Navbar({ theme, onToggleTheme, onShowTutorial }) {
+  const {
+    documentType,
+    resume,
+    coverLetter,
+    resetResume,
+    importResume,
+    importCoverLetter,
+  } = useResumeStore();
+  const isCoverLetter = documentType === "cover-letter";
   const [exporting, setExporting] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const importInputRef = useRef(null);
 
   async function handleExport() {
     setExporting(true);
     try {
-      const { exportResumeToPdf } = await import("@/lib/exportPdf");
-      await exportResumeToPdf(
-        resume.personal.fullName || "My",
-        resume.meta.paperSize || "a4"
-      );
+      const { exportDocumentToPdf } = await import("@/lib/exportPdf");
+      const name = isCoverLetter
+        ? coverLetter.sender.fullName || "My"
+        : resume.personal.fullName || "My";
+      const suffix = isCoverLetter ? "Cover-Letter" : "Resume";
+      const paperSize = isCoverLetter
+        ? coverLetter.meta.paperSize
+        : resume.meta.paperSize;
+      await exportDocumentToPdf({
+        filename: `${name.replace(/\s+/g, "-")}-${suffix}`,
+        paperSizeId: paperSize || "letter",
+      });
       toast.info("Choose \"Save as PDF\" in the print dialog.");
     } catch (err) {
       console.error("PDF export failed:", err);
@@ -125,12 +156,15 @@ export function Navbar({ theme, onToggleTheme }) {
   }
 
   function handleExportJson() {
-    const json = JSON.stringify(resume, null, 2);
+    const payload = isCoverLetter
+      ? { documentType: "cover-letter", ...coverLetter }
+      : { documentType: "resume", ...resume };
+    const json = JSON.stringify(payload, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "resume-draft.json";
+    a.download = isCoverLetter ? "cover-letter-draft.json" : "resume-draft.json";
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Draft saved to your device!");
@@ -143,8 +177,21 @@ export function Navbar({ theme, onToggleTheme }) {
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target.result);
-        loadResume(data);
-        toast.success("Draft imported successfully!");
+        const isCoverLetterFile =
+          data.documentType === "cover-letter" || Boolean(data.sender && data.letter);
+
+        if (isCoverLetterFile) {
+          importCoverLetter(data);
+          toast.success("Cover letter imported successfully!");
+        } else {
+          const keepPhotoTemplate = resume.meta.template === "classic-photo";
+          importResume(data);
+          if (keepPhotoTemplate && data.meta?.template === "classic") {
+            toast.success("Classic draft imported! Add your photo in Personal Info.");
+          } else {
+            toast.success("Draft imported successfully!");
+          }
+        }
       } catch {
         toast.error("Invalid file — please use a .json draft file.");
       }
@@ -186,21 +233,23 @@ export function Navbar({ theme, onToggleTheme }) {
               </Button>
 
               {/* Import JSON */}
-              <label htmlFor="import-json-desk">
-                <Button variant="ghost" size="sm" asChild>
-                  <span className="flex items-center gap-1 cursor-pointer">
-                    <Upload className="h-4 w-4" />
-                    <span className="hidden lg:inline">Import</span>
-                  </span>
-                </Button>
-                <input
-                  id="import-json-desk"
-                  type="file"
-                  accept=".json"
-                  className="hidden"
-                  onChange={handleImportJson}
-                />
-              </label>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-1"
+                onClick={() => setImportDialogOpen(true)}
+              >
+                <Upload className="h-4 w-4" />
+                <span className="hidden lg:inline">Import</span>
+              </Button>
+              <input
+                ref={importInputRef}
+                id="import-json-desk"
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={handleImportJson}
+              />
 
               {/* Save Draft */}
               <Button variant="ghost" size="sm" onClick={handleExportJson}>
@@ -210,10 +259,10 @@ export function Navbar({ theme, onToggleTheme }) {
 
               {/* Reset */}
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => setResetOpen(true)}
-                className="text-destructive hover:text-destructive"
+                className="border-destructive/50 text-red-600 dark:text-red-400 hover:bg-destructive/10 hover:text-red-600 dark:hover:text-red-400 hover:border-destructive"
               >
                 <RotateCcw className="h-4 w-4" />
                 <span className="hidden lg:inline ml-1">Reset</span>
@@ -231,21 +280,16 @@ export function Navbar({ theme, onToggleTheme }) {
                 <DropdownMenuContent align="end" className="w-52">
                   <DropdownMenuItem onClick={() => setHelpOpen(true)}>
                     <HelpCircle className="h-4 w-4 mr-2" />
-                    What is Save / Import?
+                    Save / Import help
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onShowTutorial}>
+                    <Map className="h-4 w-4 mr-2" />
+                    Show app tour
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <label htmlFor="import-json-mob" className="flex items-center gap-2 cursor-pointer w-full">
-                      <Upload className="h-4 w-4" />
-                      Import Draft
-                      <input
-                        id="import-json-mob"
-                        type="file"
-                        accept=".json"
-                        className="hidden"
-                        onChange={handleImportJson}
-                      />
-                    </label>
+                  <DropdownMenuItem onClick={() => setImportDialogOpen(true)}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import Draft
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleExportJson}>
                     <Save className="h-4 w-4 mr-2" />
@@ -254,7 +298,7 @@ export function Navbar({ theme, onToggleTheme }) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setResetOpen(true)}
-                    className="text-destructive focus:text-destructive"
+                    className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                   >
                     <RotateCcw className="h-4 w-4 mr-2" />
                     Reset Resume
@@ -286,7 +330,18 @@ export function Navbar({ theme, onToggleTheme }) {
       </header>
 
       {/* Save Draft / Import help dialog */}
-      <DraftHelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <DraftHelpDialog
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        onShowTutorial={onShowTutorial}
+      />
+
+      <ImportDraftDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        documentType={documentType}
+        onChooseFile={() => importInputRef.current?.click()}
+      />
 
       {/* Reset confirmation dialog */}
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>

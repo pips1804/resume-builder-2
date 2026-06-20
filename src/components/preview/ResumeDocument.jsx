@@ -48,6 +48,55 @@ function getTheme(template, accent) {
       bulletStyle: { margin: "3px 0 0 0", paddingLeft: "16px", listStyleType: "disc" },
       bulletItemStyle: { fontSize: "inherit", color: "#222", lineHeight: 1.5, marginBottom: "2px" },
       bodyText: { fontSize: "inherit", color: "#222", lineHeight: 1.55, margin: "4px 0 0 0", textAlign: "justify" },
+      supportsPhoto: false,
+    },
+
+    // ── Classic + Photo ────────────────────────────────────────────
+    "classic-photo": {
+      fontFamily: "Georgia, 'Times New Roman', serif",
+      headerAlign: "left",
+      nameStyle: {
+        fontSize: "24px", fontWeight: "700",
+        textTransform: "uppercase", letterSpacing: "0.04em",
+        color: ac, margin: "0 0 4px 0", lineHeight: 1.15,
+      },
+      jobTitleStyle: {
+        fontSize: "12px", color: "#111",
+        margin: "0 0 6px 0", fontWeight: "700",
+        textTransform: "uppercase", letterSpacing: "0.03em",
+      },
+      contactsStyle: {
+        fontSize: "11px", color: "#555",
+        lineHeight: 1.5, margin: 0,
+      },
+      contactSep: " | ",
+      headerMarginBottom: "14px",
+      headerBottomRule: true,
+      sectionGap: "12px",
+      sectionHeading: (title) => ({
+        wrapper: { marginBottom: "5px" },
+        text: {
+          fontSize: "13px", fontWeight: "700",
+          textTransform: "uppercase", letterSpacing: "0.08em",
+          color: ac, margin: "0 0 5px 0",
+        },
+        rule: { height: "1px", backgroundColor: ac, opacity: 0.8 },
+      }),
+      entryTop: { marginTop: "6px" },
+      entryTitleStyle: { fontSize: "12px", fontWeight: "700", color: "#111" },
+      subtitleStyle: { fontSize: "11px", color: "#444", fontStyle: "italic", margin: "1px 0 2px 0" },
+      dateStyle: { fontSize: "11px", color: "#444", whiteSpace: "nowrap", marginLeft: "8px", textAlign: "right" },
+      bulletStyle: { margin: "3px 0 0 0", paddingLeft: "16px", listStyleType: "disc" },
+      bulletItemStyle: { fontSize: "inherit", color: "#222", lineHeight: 1.5, marginBottom: "2px" },
+      bodyText: { fontSize: "inherit", color: "#222", lineHeight: 1.55, margin: "4px 0 0 0", textAlign: "justify" },
+      supportsPhoto: true,
+      photoStyle: {
+        width: "92px",
+        height: "92px",
+        objectFit: "cover",
+        flexShrink: 0,
+        border: "1px solid #ccc",
+      },
     },
 
     // ── Modern ───────────────────────────────────────────────────
@@ -165,19 +214,19 @@ function EntryRow({ left, right, theme }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Resume Header
 // ─────────────────────────────────────────────────────────────────────────────
-function ResumeHeader({ personal, theme }) {
-  const contacts = [
-    personal.email,
-    personal.phone,
-    personal.website,
-    personal.linkedin,
-    personal.github,
-    personal.location,
-  ].filter(Boolean);
+function ResumeHeader({ personal, theme, showPhoto, accentColor }) {
+  const contacts = (theme.supportsPhoto
+    ? [personal.location, personal.phone, personal.email, personal.website, personal.linkedin, personal.github]
+    : [personal.email, personal.phone, personal.website, personal.linkedin, personal.github, personal.location]
+  ).filter(Boolean);
 
-  return (
-    <div style={{ textAlign: theme.headerAlign, marginBottom: theme.headerMarginBottom }}>
-      <h1 style={theme.nameStyle}>{personal.fullName || "Your Name"}</h1>
+  const nameStyle = theme.supportsPhoto
+    ? { ...theme.nameStyle, color: accentColor || theme.nameStyle.color }
+    : theme.nameStyle;
+
+  const textBlock = (
+    <>
+      <h1 style={nameStyle}>{personal.fullName || "Your Name"}</h1>
       {personal.jobTitle && (
         <p style={theme.jobTitleStyle}>{personal.jobTitle}</p>
       )}
@@ -186,6 +235,55 @@ function ResumeHeader({ personal, theme }) {
           {contacts.join(theme.contactSep)}
         </p>
       )}
+    </>
+  );
+
+  const displayPhoto = theme.supportsPhoto && showPhoto && personal.photo;
+  const wrapperStyle = {
+    textAlign: theme.headerAlign,
+    marginBottom: theme.headerMarginBottom,
+  };
+
+  const bottomRule = theme.headerBottomRule ? (
+    <div
+      style={{
+        height: "2px",
+        backgroundColor: accentColor || "#1a1a1a",
+        marginTop: "12px",
+        opacity: 0.85,
+      }}
+    />
+  ) : null;
+
+  if (!displayPhoto) {
+    return (
+      <div style={wrapperStyle}>
+        {textBlock}
+        {bottomRule}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginBottom: theme.headerMarginBottom }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "16px",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+          {textBlock}
+        </div>
+        <img
+          src={personal.photo}
+          alt={personal.fullName || "Profile photo"}
+          style={theme.photoStyle}
+        />
+      </div>
+      {bottomRule}
     </div>
   );
 }
@@ -263,11 +361,19 @@ function ExperienceSection({ experience, theme }) {
           <div key={exp.id} style={theme.entryTop}>
             <EntryRow
               left={<span style={theme.entryTitleStyle}>{exp.company}</span>}
-              right={[exp.location, dateRange].filter(Boolean).join("  ")}
+              right={exp.location || null}
               theme={theme}
             />
-            {exp.position && (
-              <p style={theme.subtitleStyle}>{exp.position}</p>
+            {(exp.position || dateRange) && (
+              <EntryRow
+                left={
+                  exp.position ? (
+                    <span style={{ ...theme.subtitleStyle, margin: 0 }}>{exp.position}</span>
+                  ) : null
+                }
+                right={dateRange || null}
+                theme={theme}
+              />
             )}
             {bullets.length > 0 && (
               <ul style={theme.bulletStyle}>
@@ -468,7 +574,7 @@ export function ResumeDocument() {
   const { resume } = useResumeStore();
   const { meta, personal } = resume;
 
-  const paper      = getPaperSize(meta.paperSize || "a4");
+  const paper      = getPaperSize(meta.paperSize || "letter");
   const padding    = marginMap[meta.pageMargin]  || 48;
   const fontSize   = fontSizeMap[meta.fontSize]  || "12px";
   const theme      = getTheme(meta.template, meta.accentColor);
@@ -479,7 +585,7 @@ export function ResumeDocument() {
 
   return (
     <div
-      id="resume-root"
+      id="document-root"
       style={{
         width:           `${paper.widthPx}px`,
         minHeight:       `${paper.heightPx}px`,
@@ -492,7 +598,12 @@ export function ResumeDocument() {
         boxSizing:       "border-box",
       }}
     >
-      <ResumeHeader personal={personal} theme={theme} />
+      <ResumeHeader
+        personal={personal}
+        theme={theme}
+        showPhoto={meta.showPhoto}
+        accentColor={meta.accentColor}
+      />
 
       {visibleSections.map((key) => {
         const renderer = SECTION_COMPONENTS[key];

@@ -7,7 +7,7 @@ export const defaultResume = {
     fontFamily: "Georgia, serif",
     fontSize: "md",
     pageMargin: "normal",
-    paperSize: "a4",
+    paperSize: "letter",
     showPhoto: false,
     sectionOrder: [
       "summary",

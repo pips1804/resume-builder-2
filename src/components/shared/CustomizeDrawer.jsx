@@ -52,9 +52,26 @@ const MARGINS = [
   { id: "wide", label: "Wide" },
 ];
 
+const TEMPLATE_LABELS = {
+  classic: "Classic",
+  "classic-photo": "Classic + Photo",
+  modern: "Modern",
+  minimal: "Minimal",
+  professional: "Professional",
+};
+
 export function CustomizeDrawer() {
-  const { resume, updateMeta, reorderSections, toggleSection, reopenTemplatePicker } = useResumeStore();
-  const meta = resume.meta;
+  const {
+    documentType,
+    resume,
+    coverLetter,
+    updateMeta,
+    reorderSections,
+    toggleSection,
+    reopenTemplatePicker,
+  } = useResumeStore();
+  const isCoverLetter = documentType === "cover-letter";
+  const meta = isCoverLetter ? coverLetter.meta : resume.meta;
   const [customColor, setCustomColor] = useState(meta.accentColor || "#1a1a1a");
 
   function handleDragEnd(result) {
@@ -121,7 +138,9 @@ export function CustomizeDrawer() {
             </Label>
             <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/40">
               <div>
-                <p className="text-sm font-medium capitalize">{meta.template || "Classic"}</p>
+                <p className="text-sm font-medium">
+                  {TEMPLATE_LABELS[meta.template] || "Classic"}
+                </p>
                 <p className="text-xs text-muted-foreground">Currently active</p>
               </div>
               <Button
@@ -137,6 +156,25 @@ export function CustomizeDrawer() {
           </div>
 
           <Separator />
+
+          {meta.template === "classic-photo" && !isCoverLetter && (
+            <>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <p className="text-sm font-medium">Profile Photo</p>
+                  <p className="text-xs text-muted-foreground">
+                    Show photo in the resume header
+                  </p>
+                </div>
+                <Switch
+                  checked={meta.showPhoto}
+                  onCheckedChange={(checked) => updateMeta({ showPhoto: checked })}
+                  aria-label="Toggle profile photo"
+                />
+              </div>
+              <Separator />
+            </>
+          )}
 
           {/* Accent Color */}
           <div className="space-y-2">
@@ -253,56 +291,60 @@ export function CustomizeDrawer() {
             </div>
           </div>
 
-          <Separator />
+          {!isCoverLetter && (
+            <>
+              <Separator />
 
-          {/* Section Order & Visibility */}
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Sections (drag to reorder)
-            </Label>
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="sections">
-                {(provided) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="space-y-1"
-                  >
-                    {meta.sectionOrder.map((key, index) => {
-                      const isHidden = meta.hiddenSections.includes(key);
-                      return (
-                        <Draggable key={key} draggableId={key} index={index}>
-                          {(prov) => (
-                            <div
-                              ref={prov.innerRef}
-                              {...prov.draggableProps}
-                              className={cn(
-                                "flex items-center gap-2 px-2 py-1.5 rounded-md border bg-background",
-                                isHidden && "opacity-50"
+              {/* Section Order & Visibility */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Sections (drag to reorder)
+                </Label>
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="sections">
+                    {(provided) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className="space-y-1"
+                      >
+                        {meta.sectionOrder.map((key, index) => {
+                          const isHidden = meta.hiddenSections.includes(key);
+                          return (
+                            <Draggable key={key} draggableId={key} index={index}>
+                              {(prov) => (
+                                <div
+                                  ref={prov.innerRef}
+                                  {...prov.draggableProps}
+                                  className={cn(
+                                    "flex items-center gap-2 px-2 py-1.5 rounded-md border bg-background",
+                                    isHidden && "opacity-50"
+                                  )}
+                                >
+                                  <div {...prov.dragHandleProps}>
+                                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                                  </div>
+                                  <span className="flex-1 text-sm">
+                                    {SECTION_LABELS[key] || key}
+                                  </span>
+                                  <Switch
+                                    checked={!isHidden}
+                                    onCheckedChange={() => toggleSection(key)}
+                                    aria-label={`Toggle ${key}`}
+                                  />
+                                </div>
                               )}
-                            >
-                              <div {...prov.dragHandleProps}>
-                                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                              </div>
-                              <span className="flex-1 text-sm">
-                                {SECTION_LABELS[key] || key}
-                              </span>
-                              <Switch
-                                checked={!isHidden}
-                                onCheckedChange={() => toggleSection(key)}
-                                aria-label={`Toggle ${key}`}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      );
-                    })}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          </div>
+                            </Draggable>
+                          );
+                        })}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              </div>
+            </>
+          )}
         </div>
       </SheetContent>
     </Sheet>
