@@ -8,8 +8,10 @@ import { PrintDocumentSource } from "@/components/preview/PrintDocumentSource";
 import { DocumentTypeSelector } from "@/components/shared/DocumentTypeSelector";
 import { TemplateSelector } from "@/components/shared/TemplateSelector";
 import { OnboardingWalkthrough } from "@/components/shared/OnboardingWalkthrough";
+import { InterviewPanel } from "@/components/interview/InterviewPanel";
 import { PageTransition } from "@/components/shared/motion";
 import { useResumeStore } from "@/store/resumeStore";
+import { useInterviewStore } from "@/store/interviewStore";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -41,6 +43,7 @@ export default function App() {
     coverLetter,
   } = useResumeStore();
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const interviewPanelOpen = useInterviewStore((s) => s.panelOpen);
 
   const isCoverLetter = documentType === "cover-letter";
 
@@ -101,6 +104,7 @@ export default function App() {
           <DocumentTypeSelector theme={theme} onToggleTheme={toggleTheme} />
         </PageTransition>
         <Toaster richColors position="bottom-right" />
+        {interviewPanelOpen && <InterviewPanel />}
       </>
     );
   }
@@ -112,6 +116,7 @@ export default function App() {
           <TemplateSelector theme={theme} onToggleTheme={toggleTheme} />
         </PageTransition>
         <Toaster richColors position="bottom-right" />
+        {interviewPanelOpen && <InterviewPanel />}
       </>
     );
   }
@@ -162,6 +167,8 @@ export default function App() {
         onComplete={handleTutorialComplete}
         documentType={documentType}
       />
+
+      {interviewPanelOpen && <InterviewPanel />}
     </PageTransition>
   );
 }

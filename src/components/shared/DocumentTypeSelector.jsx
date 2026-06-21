@@ -1,8 +1,11 @@
-import { BriefcaseBusiness, FileText, Mail, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { BriefcaseBusiness, FileText, Mail, ArrowRight, Lock, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
 import { StaggerItem } from "./motion";
+import { InterviewAccessDialog } from "@/components/interview/InterviewAccessDialog";
 import { useResumeStore } from "@/store/resumeStore";
+import { isInterviewFeatureEnabled } from "@/lib/gemini";
 import { cn } from "@/lib/utils";
 
 const DOCUMENT_TYPES = [
@@ -24,6 +27,8 @@ const DOCUMENT_TYPES = [
 
 export function DocumentTypeSelector({ theme, onToggleTheme }) {
   const { chooseDocumentType } = useResumeStore();
+  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
+  const showInterview = isInterviewFeatureEnabled();
 
   return (
     <div className="h-full bg-background flex flex-col overflow-y-auto">
@@ -73,7 +78,52 @@ export function DocumentTypeSelector({ theme, onToggleTheme }) {
             );
           })}
         </div>
+
+        {showInterview && (
+          <StaggerItem index={2} className="max-w-2xl mx-auto mt-6 w-full">
+            <div className="rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 p-5 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <MessageSquare className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-semibold text-lg">Mock Interview Coach</h3>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      <Lock className="h-3 w-3" />
+                      Private
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Practice a 3-stage job interview with AI — pre-screening, initial,
+                    and final rounds tailored to your target role.
+                  </p>
+                  <p className="text-xs text-muted-foreground/90 flex items-start gap-1.5 rounded-md bg-background/80 border px-3 py-2">
+                    <Lock className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" />
+                    <span>
+                      <strong className="font-medium text-foreground">Security code required.</strong>{" "}
+                      This feature is private — enter your security code each time
+                      you want to use the interview coach.
+                    </span>
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-1 gap-2"
+                    onClick={() => setAccessDialogOpen(true)}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Enter security code
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </StaggerItem>
+        )}
       </div>
+
+      <InterviewAccessDialog open={accessDialogOpen} onOpenChange={setAccessDialogOpen} />
     </div>
   );
 }

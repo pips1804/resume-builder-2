@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
 import { CustomizeDrawer } from "./CustomizeDrawer";
 import { ImportDraftDialog } from "./ImportDraftDialog";
+import { InterviewAccessDialog } from "@/components/interview/InterviewAccessDialog";
 import { useResumeStore } from "@/store/resumeStore";
+import { isInterviewFeatureEnabled } from "@/lib/gemini";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -129,7 +131,23 @@ export function Navbar({ theme, onToggleTheme, onShowTutorial }) {
   const [resetOpen, setResetOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [interviewAccessOpen, setInterviewAccessOpen] = useState(false);
   const importInputRef = useRef(null);
+  const logoClickRef = useRef({ count: 0, timer: null });
+
+  function handleLogoSecretClick() {
+    if (!isInterviewFeatureEnabled()) return;
+    const ref = logoClickRef.current;
+    ref.count += 1;
+    clearTimeout(ref.timer);
+    ref.timer = setTimeout(() => {
+      ref.count = 0;
+    }, 600);
+    if (ref.count >= 3) {
+      ref.count = 0;
+      setInterviewAccessOpen(true);
+    }
+  }
 
   async function handleExport() {
     setExporting(true);
@@ -215,12 +233,17 @@ export function Navbar({ theme, onToggleTheme, onShowTutorial }) {
       <header className="shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-40">
         <div className="flex h-14 items-center justify-between px-3 sm:px-4 gap-2">
           {/* Logo */}
-          <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={handleLogoSecretClick}
+            className="flex items-center gap-2 min-w-0 rounded-md px-1 -ml-1 hover:opacity-80 transition-opacity"
+            aria-label="HireMePo home"
+          >
             <BriefcaseBusiness className="h-5 w-5 text-primary shrink-0" />
             <span className="font-semibold text-sm truncate hidden xs:block sm:block">
               HireMePo 2.0
             </span>
-          </div>
+          </button>
 
           <div className="flex items-center gap-1">
             {/* Desktop secondary actions */}
@@ -345,6 +368,11 @@ export function Navbar({ theme, onToggleTheme, onShowTutorial }) {
         onOpenChange={setImportDialogOpen}
         documentType={documentType}
         onChooseFile={() => importInputRef.current?.click()}
+      />
+
+      <InterviewAccessDialog
+        open={interviewAccessOpen}
+        onOpenChange={setInterviewAccessOpen}
       />
 
       {/* Reset confirmation dialog */}
