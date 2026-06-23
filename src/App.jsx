@@ -64,16 +64,15 @@ export default function App() {
       if ((e.ctrlKey || e.metaKey) && e.key === "p") {
         e.preventDefault();
         try {
-          const { exportDocumentToPdf } = await import("./lib/exportPdf");
+          const { exportDocumentToPdf, buildExportFilename } = await import("./lib/exportPdf");
           const name = isCoverLetter
-            ? coverLetter.sender.fullName || "My"
-            : resume.personal.fullName || "My";
-          const suffix = isCoverLetter ? "Cover-Letter" : "Resume";
+            ? coverLetter.sender.fullName
+            : resume.personal.fullName;
           const paperSize = isCoverLetter
             ? coverLetter.meta.paperSize
             : resume.meta.paperSize;
           const result = await exportDocumentToPdf({
-            filename: `${name.replace(/\s+/g, "-")}-${suffix}`,
+            filename: buildExportFilename({ fullName: name, isCoverLetter }),
             paperSizeId: paperSize || "letter",
           });
           if (result?.method === "download") {

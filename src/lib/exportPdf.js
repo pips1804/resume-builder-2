@@ -114,9 +114,41 @@ function attachCloneForCapture(clone, paper) {
 }
 
 /**
- * Mobile-friendly: render the document to a PDF file and trigger download
- * (avoids Android "Save as PDF" printing the whole web page).
+ * @param {{ fullName?: string, isCoverLetter?: boolean }} opts
+ * @returns {string} e.g. "Jane Doe - Resume"
  */
+export function buildExportFilename({ fullName, isCoverLetter = false } = {}) {
+  const name = (fullName || "Applicant").trim() || "Applicant";
+  const label = isCoverLetter ? "Cover Letter" : "Resume";
+  return `${name} - ${label}`;
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+async function withExportDocumentTitle(title, run) {
+  const previousTitle = document.title;
+  document.title = title;
+  try {
+    return await run();
+  } finally {
+    document.title = previousTitle;
+  }
+}
+function sanitizePdfFilename(filename) {
+  return (
+    String(filename)
+      .replace(/[\\/:*?"<>|]/g, "")
+      .replace(/\s+/g, " ")
+      .trim() || "Document"
+  );
+}
+
 async function exportViaHtml2Pdf(clone, paper, filename) {
   const wrapper = attachCloneForCapture(clone, paper);
 
@@ -125,10 +157,11 @@ async function exportViaHtml2Pdf(clone, paper, filename) {
     await new Promise((resolve) => setTimeout(resolve, 150));
 
     const html2pdf = (await import("html2pdf.js")).default;
+    const pdfFilename = `${filename}.pdf`;
     await html2pdf()
       .set({
         margin: 0,
-        filename: `${filename}.pdf`,
+        filename: pdfFilename,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: {
           scale: 2,
@@ -150,7 +183,11 @@ async function exportViaHtml2Pdf(clone, paper, filename) {
         pagebreak: { mode: ["css", "legacy"] },
       })
       .from(clone)
-      .save();
+      .toPdf()
+      .get("pdf")
+      .then((pdf) => {
+        pdf.save(pdfFilename);
+      });
   } finally {
     wrapper.remove();
   }
@@ -161,7 +198,7 @@ function buildPrintHtml(clone, paper, title) {
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>${title}</title>
+  <title>${escapeHtml(title)}</title>
   <style>
     @page { size: ${paper.widthMm}mm ${paper.heightMm}mm; margin: 0; }
     *, *::before, *::after { box-sizing: border-box; }
@@ -204,6 +241,7 @@ async function exportViaIframePrint(clone, paper, title) {
   iframeDoc.open();
   iframeDoc.write(buildPrintHtml(clone, paper, title));
   iframeDoc.close();
+  iframeDoc.title = title;
 
   await waitForImages(iframeDoc);
   await new Promise((resolve) => setTimeout(resolve, 100));
@@ -237,22 +275,24 @@ export async function exportDocumentToPdf({
   }
 
   const paper = getPaperSize(paperSizeId);
-  const title = filename.replace(/\s+/g, "-");
+  const title = sanitizePdfFilename(filename);
   const clone = prepareClone(element);
 
-  if (prefersDirectPdfDownload()) {
-    await exportViaHtml2Pdf(clone, paper, title);
-    return { method: "download" };
-  }
+  return withExportDocumentTitle(title, async () => {
+    if (prefersDirectPdfDownload()) {
+      await exportViaHtml2Pdf(clone, paper, title);
+      return { method: "download" };
+    }
 
-  await exportViaIframePrint(clone, paper, title);
-  return { method: "print" };
+    await exportViaIframePrint(clone, paper, title);
+    return { method: "print" };
+  });
 }
 
 /** @deprecated use exportDocumentToPdf */
-export async function exportResumeToPdf(fullName = "resume", paperSizeId = "letter") {
-  const filename = fullName
-    ? `${fullName.replace(/\s+/g, "-")}-Resume`
-    : "Resume";
-  return exportDocumentToPdf({ filename, paperSizeId });
+export async function exportResumeToPdf(fullName = "Applicant", paperSizeId = "letter") {
+  return exportDocumentToPdf({
+    filename: buildExportFilename({ fullName, isCoverLetter: false }),
+    paperSizeId,
+  });
 }

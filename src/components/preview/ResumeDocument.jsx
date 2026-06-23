@@ -347,7 +347,7 @@ function EducationSection({ education, theme }) {
           edu.startDate ? formatDate(edu.startDate) : "",
           edu.endDate   ? formatDate(edu.endDate)   : "",
         ].filter(Boolean).join(" – ");
-        const degreeField = [edu.degree, edu.field].filter(Boolean).join(" of ");
+        const degreeField = [edu.degree, edu.field].filter(Boolean).join(" in ");
         return (
           <div key={edu.id} style={theme.entryTop}>
             <EntryRow
@@ -362,15 +362,25 @@ function EducationSection({ education, theme }) {
                 theme={theme}
               />
             )}
-            {edu.gpa && (
-              <p style={{ fontSize: "11px", margin: "1px 0 0 0", color: "#555" }}>
-                Cumulative GPA: {edu.gpa}
-              </p>
-            )}
-            {edu.honors && (
-              <p style={{ fontSize: "11px", margin: "1px 0 0 0", color: "#666" }}>
-                {edu.honors}
-              </p>
+            {(edu.gpa || edu.honors) && (
+              <ul style={theme.bulletStyle}>
+                {edu.gpa && (
+                  <li style={theme.bulletItemStyle}>
+                    {theme.bulletStyle.listStyleType === "none" ? "– " : ""}
+                    Cumulative GPA: {edu.gpa}
+                  </li>
+                )}
+                {edu.honors &&
+                  edu.honors
+                    .split(/\n+/)
+                    .map((line) => line.trim())
+                    .filter(Boolean)
+                    .map((honor, i) => (
+                      <li key={i} style={theme.bulletItemStyle}>
+                        {theme.bulletStyle.listStyleType === "none" ? `– ${honor}` : honor}
+                      </li>
+                    ))}
+              </ul>
             )}
           </div>
         );
